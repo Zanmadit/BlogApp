@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="styles.css">
+    <title>Blog App</title>
+</head>
+<body>
+    <h1>Blog App</h1>
+
+    <h2>Create a new Blog</h2>
+    <form id="blogForm">
+        <input type="text" id="titleInput" placeholder="Title" required>
+        <textarea id="bodyInput" placeholder="Body" required></textarea>
+        <input type="text" id="authorInput" placeholder="Author" required>
+        <button type="submit">Submit</button>
+    </form>
+
+    <h2>Existing Blogs</h2>
+    <ul id="blogList"></ul>
+
+    <script>
+        document.getElementById('blogForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+            createBlog(); 
+        });
+
+        async function createBlog() {
+            const title = document.getElementById('titleInput').value;
+            const body = document.getElementById('bodyInput').value;
+            const author = document.getElementById('authorInput').value;
+
+            try {
+                const response = await fetch('/blogs', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ title, body, author })
+                });
+                const data = await response.json();
+                console.log('New blog created:', data);
+            } catch (error) {
+                console.error('Error creating blog:', error);
+            }
+        }
+
+        async function displayBlogs() {
+            const blogList = document.getElementById('blogList');
+
+            try {
+                const response = await fetch('/blogs');
+                const blogs = await response.json();
+                blogList.innerHTML = '';
+                blogs.forEach(blog => {
+                    const li = document.createElement('li');
+                    li.textContent = `${blog.title} - ${blog.author}`;
+        
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = 'Delete';
+                    deleteButton.classList.add('delete-button');
+                    deleteButton.setAttribute('data-id', blog._id); 
+                    li.appendChild(deleteButton);
+                    blogList.appendChild(li);
+                });
+            } catch (error) {
+                console.error('Error fetching blogs:', error);
+            }
+        }
+
+        async function deleteBlog(id) {
+            try {
+                const response = await fetch(`/blogs/${id}`, {
+                    method: 'DELETE'
+                });
+                if (response.ok) {
+                    console.log('Blog deleted successfully');
+                    displayBlogs();
+                } else {
+                    console.error('Failed to delete blog');
+                }
+            } catch (error) {
+                console.error('Error deleting blog:', error);
+            }
+        }
+
+        async function getAllBlogs() {
+            try {
+                const response = await fetch('/blogs');
+                const blogs = await response.json();
+                console.log('All blogs:', blogs);
+            } catch (error) {
+                console.error('Error fetching blogs:', error);
+            }
+        }
+
+        async function getBlogById(id) {
+            try {
+                const response = await fetch(`/blogs/${id}`);
+                const blog = await response.json();
+                console.log('Blog by ID:', blog);
+            } catch (error) {
+                console.error('Error fetching blog by ID:', error);
+            }
+        }
+
+        async function updateBlogById(id, updatedBlogData) {
+            try {
+                const response = await fetch(`/blogs/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updatedBlogData)
+                });
+                const updatedBlog = await response.json();
+                console.log('Updated blog:', updatedBlog);
+            } catch (error) {
+                console.error('Error updating blog by ID:', error);
+            }
+        }
+
+        document.addEventListener('click', function(event) {
+            if (event.target.classList.contains('delete-button')) {
+                const blogId = event.target.getAttribute('data-id');
+                deleteBlog(blogId);
+            }
+        });
+
+        window.onload = async function() {
+            try {
+                await getAllBlogs();
+
+                // const blogIdToGet = '65c310e1a800f8bd7369b816'; // Замените на реальный ID вашего блога
+                // await getBlogById(blogIdToGet);
+
+                // const blogIdToUpdate = '65c31723a800f8bd7369b8bb'; 
+                // const updatedBlogData = { title: 'Updated Title', body: 'Updated Body', author: 'Updated Author' }; 
+                // await updateBlogById(blogIdToUpdate, updatedBlogData);
+
+                await displayBlogs();
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        };
+    </script>
+</body>
+</html>
